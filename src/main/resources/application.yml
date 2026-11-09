@@ -1,0 +1,91 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+      # 为测试方便，session cookie 不设 HttpOnly，便于 MockMvc 抓取
+      cookie:
+        http-only: false
+
+spring:
+  application:
+    name: vuln-lab
+
+  # ====== H2 内存数据库 ======
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:vulnlab;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+
+  # ====== 启动时自动执行 schema.sql / data.sql ======
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+      encoding: UTF-8
+
+  # ====== H2 控制台（生产环境禁止开启）======
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# ====== MyBatis-Plus ======
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ====== 自定义靶场配置 ======
+vuln-lab:
+  # SSRF 防御：禁止访问的内网网段
+  ssrf:
+    blocked-prefixes:
+      - 127.
+      - 0.
+      - 10.
+      - 172.16.
+      - 172.17.
+      - 172.18.
+      - 172.19.
+      - 172.20.
+      - 172.21.
+      - 172.22.
+      - 172.23.
+      - 172.24.
+      - 172.25.
+      - 172.26.
+      - 172.27.
+      - 172.28.
+      - 172.29.
+      - 172.30.
+      - 172.31.
+      - 192.168.
+      - 169.254.
+      - ::1
+      - fe80:
+      - fc00:
+    allowed-protocols:
+      - http
+      - https
+  # CSRF 防御：生效路径
+  csrf:
+    enabled: true
+    exclude-paths:
+      - /csrf/token
+      - /h2-console/**
+
+logging:
+  level:
+    com.example.vulnlab: debug
+    org.springframework.jdbc: warn
